@@ -137,12 +137,13 @@ ubuntu   11228  0.0  0.3  36084  3308 pts/0    R+   14:44   0:00 ps aux
 ```
 
 - Django設定
-- `sudo -H pip3 install --upgrade pip`
-- `sudo -H pip3 install virtualenv` //仮想環境作るモジュールをインストール
-- `pwd`    ///home/ubuntu
-- `virtualenv py36` //仮想環境を作成
-- `ls py36/bin`    //アクティベート用のファイルを確認
-- `source py36/bin/activate`    //仮想環境を起動
-- `pip install django gunicorn psycopg2`
-- `pip install pillow`  //画像を扱うpillowをインストール
+  - `sudo -H pip3 install --upgrade pip`
+  - `sudo -H pip3 install virtualenv` //仮想環境作るモジュールをインストール
+  - `pwd`    ///home/ubuntu
+  - `virtualenv py36` //仮想環境を作成
+  - `ls py36/bin`    //アクティベート用のファイルを確認
+  - `source py36/bin/activate`    //仮想環境を起動
+  - `pip install django gunicorn psycopg2`
+  - `pip install pillow`  //画像を扱うpillowをインストール
+  - `python3 manage.py createsuperuser` //user作成
 

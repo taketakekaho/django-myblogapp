@@ -28,11 +28,12 @@
             </li>
         </div>
     </nav>
+    <br />
     <div class="container">
         <h1 class="text-center">ようこそ、たけるのブログへ！</h1>
         <br />
         {% load static %}
-        <img src="{% static 'posts/home.jpg' %}" class = "img-fluid rounded" style = "max-width: 100%;" />
+        <img src="{% static 'posts/home.jpg' %}" class = "img-fluid rounded mx-auto d-block img-thumbnail" style = "max-width: 100%;" alt="Responsive image" />
         <hr>
         <h3>最新の投稿</h3>
         {% for post in posts.all %}
