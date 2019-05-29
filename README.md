@@ -146,4 +146,167 @@ ubuntu   11228  0.0  0.3  36084  3308 pts/0    R+   14:44   0:00 ps aux
   - `pip install django gunicorn psycopg2`
   - `pip install pillow`  //画像を扱うpillowをインストール
   - `python3 manage.py createsuperuser` //user作成
+- Webサーバー設定
+  - `which gumicorn` //Pythonを動かすアプリケーションサーバーであるGunicornがインストールされているかを確認
+  - `gunicorn --bind 0.0.0.0:8000 myblogapp.wsgi` //8000ポート指定してmyblogapp/wsgi.pyを参照する
+  - `deactivate` //仮想環境から抜ける
+  - `ls /etc/systemd/system` //設定ファイル確認
 
+```
+[Unit]
+Description=OpenBSD Secure Shell server
+After=network.target auditd.service
+ConditionPathExists=!/etc/ssh/sshd_not_to_be_run
+
+[Service]
+EnvironmentFile=-/etc/default/ssh
+ExecStartPre=/usr/sbin/sshd -t
+ExecStart=/usr/sbin/sshd -D $SSHD_OPTS
+ExecReload=/usr/sbin/sshd -t
+ExecReload=/bin/kill -HUP $MAINPID
+KillMode=process
+Restart=on-failure
+RestartPreventExitStatus=255
+Type=notify
+
+[Install]
+WantedBy=multi-user.target
+Alias=sshd.service
+```
+  - `ls -la /etc/systemd/system` //root権限しか書き込み権限なし
+```
+total 80
+drwxr-xr-x 15 root root 4096 May 23 21:49 .
+drwxr-xr-x  5 root root 4096 May 24 06:43 ..
+drwxr-xr-x  2 root root 4096 Apr  6 08:17 cloud-final.service.wants
+drwxr-xr-x  2 root root 4096 Apr  6 08:17 cloud-init.target.wants
+drwxr-xr-x  2 root root 4096 Apr  6 08:13 default.target.wants
+drwxr-xr-x  2 root root 4096 Apr  6 08:17 final.target.wants
+drwxr-xr-x  2 root root 4096 Apr  6 08:13 getty.target.wants
+drwxr-xr-x  2 root root 4096 Apr  6 08:16 graphical.target.wants
+lrwxrwxrwx  1 root root   38 Apr  6 08:17 iscsi.service -> /lib/systemd/system/open-iscsi.service
+drwxr-xr-x  2 root root 4096 May 23 21:49 multi-user.target.wants
+drwxr-xr-x  2 root root 4096 Apr  6 08:14 network-online.target.wants
+drwxr-xr-x  2 root root 4096 Apr  6 08:17 open-vm-tools.service.requires
+drwxr-xr-x  2 root root 4096 Apr  6 08:17 paths.target.wants
+-rw-r--r--  1 root root  529 May 23 21:49 snap.amazon-ssm-agent.amazon-ssm-agent.service
+-rw-r--r--  1 root root  263 May 23 14:08 snap-amazon\x2dssm\x2dagent-1068.mount
+-rw-r--r--  1 root root  263 May 23 21:48 snap-amazon\x2dssm\x2dagent-1335.mount
+-rw-r--r--  1 root root  227 May 23 14:08 snap-core-6673.mount
+-rw-r--r--  1 root root  227 May 23 21:48 snap-core-6964.mount
+drwxr-xr-x  2 root root 4096 Apr  6 08:17 sockets.target.wants
+lrwxrwxrwx  1 root root   31 Apr  6 08:17 sshd.service -> /lib/systemd/system/ssh.service
+drwxr-xr-x  2 root root 4096 Apr  6 08:17 sysinit.target.wants
+lrwxrwxrwx  1 root root   35 Apr  6 08:14 syslog.service -> /lib/systemd/system/rsyslog.service
+drwxr-xr-x  2 root root 4096 Apr  6 08:17 timers.target.wants
+```
+
+  - `sudo vi /etc/systemd/system/gumicorn.service` //以下を書き込み保存
+
+```
+[Unit]
+Description=gunicorn daemon
+After=network.target
+
+[Service]
+User=ubuntu
+Group=www-data
+WorkingDirectory=/home/ubuntu/myblogapp
+ExecStart=/home/ubuntu/py36/bin/gunicorn --access-logfile - --workers 3 --bind u
+nix:/home/ubuntu/myblogapp/myblogapp.sock myblogapp.wsgi:application
+
+[Install]
+WantedBy=multi-user.target
+```
+
+  - `sudo systemctl start gunicorn`  //gunicorn.serviceファイルからエイリアスを作成
+
+```
+Created symlink from /etc/systemd/system/multi-user.target.wants/gunicorn.service to /etc/systemd/system/gunicorn.service.
+```
+  - `ls -la /etc/systemd/system/multi-user.target.wants` //gunicorn.serviceがあることの確認
+
+```
+drwxr-xr-x  2 root root 4096 May 29 16:47 .
+drwxr-xr-x 15 root root 4096 May 29 16:46 ..
+lrwxrwxrwx  1 root root   31 Apr  6 08:17 atd.service -> /lib/systemd/system/atd.service
+lrwxrwxrwx  1 root root   32 Apr  6 08:13 cron.service -> /lib/systemd/system/cron.service
+lrwxrwxrwx  1 root root   36 May 29 16:47 gunicorn.service -> /etc/systemd/system/gunicorn.service
+lrwxrwxrwx  1 root root   33 Apr  6 08:17 lxcfs.service -> /lib/systemd/system/lxcfs.service
+lrwxrwxrwx  1 root root   42 Apr  6 08:17 lxd-containers.service -> /lib/systemd/system/lxd-containers.service
+lrwxrwxrwx  1 root root   38 Apr  6 08:14 networking.service -> /lib/systemd/system/networking.service
+lrwxrwxrwx  1 root root   33 May 23 14:20 nginx.service -> /lib/systemd/system/nginx.service
+lrwxrwxrwx  1 root root   41 Apr  6 08:17 open-vm-tools.service -> /lib/systemd/system/open-vm-tools.service
+lrwxrwxrwx  1 root root   37 Apr  6 08:17 pollinate.service -> /lib/systemd/system/pollinate.service
+lrwxrwxrwx  1 root root   38 May 23 14:20 postgresql.service -> /lib/systemd/system/postgresql.service
+lrwxrwxrwx  1 root root   36 Apr  6 08:13 remote-fs.target -> /lib/systemd/system/remote-fs.target
+lrwxrwxrwx  1 root root   35 Apr  6 08:14 rsyslog.service -> /lib/systemd/system/rsyslog.service
+lrwxrwxrwx  1 root root   66 May 23 21:49 snap.amazon-ssm-agent.amazon-ssm-agent.service -> /etc/systemd/system/snap.amazon-ssm-agent.amazon-ssm-agent.service
+lrwxrwxrwx  1 root root   58 May 23 14:08 snap-amazon\x2dssm\x2dagent-1068.mount -> /etc/systemd/system/snap-amazon\x2dssm\x2dagent-1068.mount
+lrwxrwxrwx  1 root root   58 May 23 21:48 snap-amazon\x2dssm\x2dagent-1335.mount -> /etc/systemd/system/snap-amazon\x2dssm\x2dagent-1335.mount
+lrwxrwxrwx  1 root root   40 May 23 14:08 snap-core-6673.mount -> /etc/systemd/system/snap-core-6673.mount
+lrwxrwxrwx  1 root root   40 May 23 21:48 snap-core-6964.mount -> /etc/systemd/system/snap-core-6964.mount
+lrwxrwxrwx  1 root root   44 Apr  6 08:17 snapd.autoimport.service -> /lib/systemd/system/snapd.autoimport.service
+lrwxrwxrwx  1 root root   44 Apr  6 08:17 snapd.core-fixup.service -> /lib/systemd/system/snapd.core-fixup.service
+lrwxrwxrwx  1 root root   40 Apr  6 08:17 snapd.seeded.service -> /lib/systemd/system/snapd.seeded.service
+lrwxrwxrwx  1 root root   33 Apr  6 08:17 snapd.service -> /lib/systemd/system/snapd.service
+lrwxrwxrwx  1 root root   31 Apr  6 08:17 ssh.service -> /lib/systemd/system/ssh.service
+lrwxrwxrwx  1 root root   31 Apr  6 08:17 ufw.service -> /lib/systemd/system/ufw.service
+lrwxrwxrwx  1 root root   47 Apr  6 08:17 unattended-upgrades.service -> /lib/systemd/system/unattended-upgrades.service
+```
+  - `ls -la /home/ubuntu/myblogapp` //myblogapp.sockがあることの確認
+
+```
+total 176
+drwxr-xr-x 6 ubuntu ubuntu     4096 May 29 16:47 .
+drwxr-xr-x 8 ubuntu ubuntu     4096 May 29 16:46 ..
+-rw-r--r-- 1 ubuntu ubuntu   135168 Apr 14 12:44 db.sqlite3
+drwxrwxr-x 8 ubuntu ubuntu     4096 May 29 16:10 .git
+-rw-rw-r-- 1 ubuntu ubuntu       58 May 23 16:20 .gitignore
+-rw-r--r-- 1 ubuntu ubuntu      556 Mar  3 14:55 manage.py
+drwxr-xr-x 2 ubuntu ubuntu     4096 May 29 16:05 media
+drwxr-xr-x 3 ubuntu ubuntu     4096 May 23 17:18 myblogapp
+srwxrwxrwx 1 ubuntu www-data      0 May 29 16:47 myblogapp.sock
+drwxr-xr-x 6 ubuntu ubuntu     4096 May 23 15:37 posts
+-rw-rw-r-- 1 ubuntu ubuntu    10378 May 29 16:08 README.md
+```
+
+  - `sudo systemctl status gunicorn` //gunicornのステータスを表示
+
+```
+● gunicorn.service - gunicorn daemon
+   Loaded: loaded (/etc/systemd/system/gunicorn.service; enabled; vendor preset: enabled)
+   Active: active (running) since Wed 2019-05-29 16:47:18 UTC; 12min ago
+ Main PID: 25642 (gunicorn)
+    Tasks: 4
+   Memory: 90.8M
+      CPU: 1.056s
+   CGroup: /system.slice/gunicorn.service
+           tq25642 /home/ubuntu/py36/bin/python3 /home/ubuntu/py36/bin/gunicorn --access-logfile - --workers 3 --bind unix:/home/ubuntu/myblo
+           tq25648 /home/ubuntu/py36/bin/python3 /home/ubuntu/py36/bin/gunicorn --access-logfile - --workers 3 --bind unix:/home/ubuntu/myblo
+           tq25649 /home/ubuntu/py36/bin/python3 /home/ubuntu/py36/bin/gunicorn --access-logfile - --workers 3 --bind unix:/home/ubuntu/myblo
+           mq25651 /home/ubuntu/py36/bin/python3 /home/ubuntu/py36/bin/gunicorn --access-logfile - --workers 3 --bind unix:/home/ubuntu/myblo
+
+May 29 16:47:18 ip-172-31-38-174 systemd[1]: Started gunicorn daemon.
+May 29 16:47:18 ip-172-31-38-174 gunicorn[25642]: [2019-05-29 16:47:18 +0000] [25642] [INFO] Starting gunicorn 19.9.0
+May 29 16:47:18 ip-172-31-38-174 gunicorn[25642]: [2019-05-29 16:47:18 +0000] [25642] [INFO] Listening at: unix:/home/ubuntu/myblogapp/myblog
+May 29 16:47:18 ip-172-31-38-174 gunicorn[25642]: [2019-05-29 16:47:18 +0000] [25642] [INFO] Using worker: sync
+May 29 16:47:18 ip-172-31-38-174 gunicorn[25642]: [2019-05-29 16:47:18 +0000] [25648] [INFO] Booting worker with pid: 25648
+May 29 16:47:19 ip-172-31-38-174 gunicorn[25642]: [2019-05-29 16:47:19 +0000] [25649] [INFO] Booting worker with pid: 25649
+May 29 16:47:19 ip-172-31-38-174 gunicorn[25642]: [2019-05-29 16:47:19 +0000] [25651] [INFO] Booting worker with pid: 25651
+```
+
+  - `sudo journalctl -u gunicorn` //gunicornのログを確認
+
+```
+-- Logs begin at Sat 2019-05-25 19:17:01 UTC, end at Wed 2019-05-29 17:05:52 UTC. --
+May 29 16:47:18 ip-172-31-38-174 systemd[1]: Started gunicorn daemon.
+May 29 16:47:18 ip-172-31-38-174 gunicorn[25642]: [2019-05-29 16:47:18 +0000] [25642] [INFO] Starting gunicorn 19.9.0
+May 29 16:47:18 ip-172-31-38-174 gunicorn[25642]: [2019-05-29 16:47:18 +0000] [25642] [INFO] Listening at: unix:/home/ubuntu/myblogapp/myblog
+May 29 16:47:18 ip-172-31-38-174 gunicorn[25642]: [2019-05-29 16:47:18 +0000] [25642] [INFO] Using worker: sync
+May 29 16:47:18 ip-172-31-38-174 gunicorn[25642]: [2019-05-29 16:47:18 +0000] [25648] [INFO] Booting worker with pid: 25648
+May 29 16:47:19 ip-172-31-38-174 gunicorn[25642]: [2019-05-29 16:47:19 +0000] [25649] [INFO] Booting worker with pid: 25649
+May 29 16:47:19 ip-172-31-38-174 gunicorn[25642]: [2019-05-29 16:47:19 +0000] [25651] [INFO] Booting worker with pid: 25651
+```
+
+`` //
