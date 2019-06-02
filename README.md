@@ -220,6 +220,7 @@ WantedBy=multi-user.target
 ```
 
   - `sudo systemctl start gunicorn`  //gunicorn.serviceファイルからエイリアスを作成
+- `sudo systemctl enable gunicorn`  //設定ファイルが呼ばれてgunicorn起動
 
 ```
 Created symlink from /etc/systemd/system/multi-user.target.wants/gunicorn.service to /etc/systemd/system/gunicorn.service.
@@ -309,6 +310,65 @@ May 29 16:47:19 ip-172-31-38-174 gunicorn[25642]: [2019-05-29 16:47:19 +0000] [2
 May 29 16:47:19 ip-172-31-38-174 gunicorn[25642]: [2019-05-29 16:47:19 +0000] [25651] [INFO] Booting worker with pid: 25651
 ```
 
+  - `cd /etc/nginx/`
+  - `ls`
 
+```
+conf.d          koi-utf     nginx.conf    sites-available  uwsgi_params
+fastcgi.conf    koi-win     proxy_params  sites-enabled    win-utf
+fastcgi_params  mime.types  scgi_params   snippets
+```
+  - `cd sites-available/`
+  - `ls`
 
-`` //
+```
+default
+```
+
+- Nginx設定
+  - `sudo vi myblogapp` //myblogappファイルを作成し以下を書き込み
+
+```
+server {
+    listen 80;
+    server_name 3.112.237.139;
+
+    location = /favicon.ico {access_log off; log_not_found off;}
+    location /static/ {
+        root /home/ubuntu/myblogapp;
+    }
+
+    location / {
+        include proxy_params;
+        proxy_pass http://unix:/home/ubuntu/myblogapp/myblogapp.sock;
+    }
+}
+```
+
+  - `sudo ln -s /etc/nginx/sites-available/myblogapp /etc/nginx/sites-enabled/` //シンボリック作成
+  - `ls -la /etc/nginx/sites-enabled/` //シンボリックリンクが作成されたこと確認
+  - `sudo nginx -t` //設定ファイルが合っているかの確認
+
+```
+nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
+nginx: configuration file /etc/nginx/nginx.conf test is successful
+```
+
+  - `sudo systemctl restart nginx` //nginx再起動
+  - `sudo ufw delete allow 8000` //Ubuntuのソフトウェアファイアウォールの8000番ポートを無効化（有効になっていた場合にはRules updatedと表示されるが元からない場合には以下となる）
+
+```
+Could not delete non-existent rule
+Could not delete non-existent rule (v6)
+```
+
+  - `sudo ufw allow 'Nginx Full'`  //Nginxが使うポート（80番）を開放
+
+```
+Rules updated
+Rules updated (v6)
+```
+
+  - AWSコンソールでインバウンド80番ポートを開放
+  - `sudo systemctl restart nginx` //nginx再起動
+  - 
