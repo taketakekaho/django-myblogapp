@@ -373,4 +373,30 @@ Rules updated (v6)
   - AWSコンソールでインバウンド80番ポートを開放
   - `sudo systemctl restart nginx` //nginx再起動
 
+- AdminのCSSを適用
+  - /home/ubuntu/py36/lib/python3.5/site-packages/django/contrib/admin/static/admin //Django関係のCSSの場所
+  - `sudo vi etc/nginx/sites-available/myblogapp`
 
+```
+server {
+    listen 80;
+    server_name 3.112.237.139;
+
+    location = /favicon.ico {access_log off; log_not_found off;}
+    location /static/ {
+        root /home/ubuntu/myblogapp/posts;
+    }
+
+    location /static/admin {
+        root /home/ubuntu/py36/lib/python3.5/site-packages/django/contrib/admin;
+    }
+
+    location / {
+        include proxy_params;
+        proxy_pass http://unix:/home/ubuntu/myblogapp/myblogapp.sock;
+    }
+}
+```
+
+  - `sudo systemctl restart nginx` //nginx再起動
+  - 
