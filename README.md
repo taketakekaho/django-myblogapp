@@ -335,7 +335,7 @@ server {
 
     location = /favicon.ico {access_log off; log_not_found off;}
     location /static/ {
-        root /home/ubuntu/myblogapp;
+        root /home/ubuntu/myblogapp/posts;
     }
 
     location / {
@@ -369,6 +369,8 @@ Rules updated
 Rules updated (v6)
 ```
 
+- AWSポート設定
   - AWSコンソールでインバウンド80番ポートを開放
   - `sudo systemctl restart nginx` //nginx再起動
-  - 
+
+
